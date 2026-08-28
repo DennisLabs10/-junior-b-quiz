@@ -416,10 +416,6 @@ const TIER_META = [
   { tier: "Hard", emoji: "🔴", desc: "Real challenge", topics: "present simple • present continuous • simple vs continuous" },
   { tier: "Challenge", emoji: "🟣", desc: "Mix it all!", topics: "some/any • whose • possessive 's • object pronouns • much/many • mixed review" }
 ];
-function pickRandomSet(tier) {
-  const options = quizSets.filter(s => s.tier === tier);
-  return options[Math.floor(Math.random() * options.length)];
-}
 function poolForTier(tier) {
   return quizSets.filter(s => s.tier === tier).flatMap(s => s.questions);
 }
@@ -1101,6 +1097,7 @@ function showResult() {
 
 /* ---------- Team Battle ---------- */
 let battleSet = null;
+let battleQuestions = [];
 let battleCurrent = 0;
 let battleScores = { A: 0, B: 0 };
 let battleNames = { A: "Team A", B: "Team B" };
@@ -1140,7 +1137,15 @@ function confirmBattleTeams() {
 }
 
 function startRandomBattle(tier) {
-  startBattle(pickRandomSet(tier).id);
+  const meta = TIER_META.find(t => t.tier === tier);
+  battleSet = { tier: tier, title: tier, emoji: meta.emoji };
+  battleQuestions = prepareQuestions(pickQuestionsForTier(tier, 8));
+  battleCurrent = 0;
+  battleScores = { A: 0, B: 0 };
+  subtitleEl.innerHTML = `⚔️ ${meta.emoji} <b>${tier}</b>`;
+  setScreen("battleGame");
+  buildBattleShell();
+  battleShowQuestion();
 }
 
 function renderBattleMenu() {
@@ -1202,27 +1207,17 @@ function buildBattleShell() {
   teamScoreBEl.textContent = "0";
 }
 
-function startBattle(id) {
-  battleSet = quizSets.find(s => s.id === id);
-  battleCurrent = 0;
-  battleScores = { A: 0, B: 0 };
-  subtitleEl.innerHTML = `⚔️ ${battleSet.emoji} <b>${battleSet.title}</b> &nbsp;•&nbsp; ${battleSet.tier}`;
-  setScreen("battleGame");
-  buildBattleShell();
-  battleShowQuestion();
-}
-
 function battleShowQuestion() {
-  if (battleCurrent >= battleSet.questions.length) {
+  if (battleCurrent >= battleQuestions.length) {
     battleShowResult();
     return;
   }
-  const item = battleSet.questions[battleCurrent];
+  const item = battleQuestions[battleCurrent];
   currentTurn = (battleCurrent % 2 === 0) ? "A" : "B";
 
   teamBoxAEl.classList.toggle("active", currentTurn === "A");
   teamBoxBEl.classList.toggle("active", currentTurn === "B");
-  turnBannerEl.textContent = `${currentTurn === "A" ? "🔵" : "🔴"} ${battleNames[currentTurn]}'s turn — Question ${battleCurrent + 1} of ${battleSet.questions.length}`;
+  turnBannerEl.textContent = `${currentTurn === "A" ? "🔵" : "🔴"} ${battleNames[currentTurn]}'s turn — Question ${battleCurrent + 1} of ${battleQuestions.length}`;
   turnBannerEl.style.background = currentTurn === "A" ? "#e7edfa" : "#fdeceb";
   turnBannerEl.style.color = currentTurn === "A" ? "#0052BF" : "#E11E1F";
 
@@ -1270,7 +1265,7 @@ function battleChoose(i, btn) {
   if (battleAnswered) return;
   battleAnswered = true;
   clearInterval(battleTimer);
-  const item = battleSet.questions[battleCurrent];
+  const item = battleQuestions[battleCurrent];
   const buttons = battleOptionsEl.querySelectorAll(".option");
   buttons.forEach(b => b.disabled = true);
   const turn = currentTurn;
@@ -1314,6 +1309,10 @@ function battleShowResult() {
   else if (battleScores.B > battleScores.A) { winner = battleNames.B; emoji = "🏆"; }
   else { emoji = "🤝"; }
   const title = winner ? `${emoji} ${winner} wins!` : `${emoji} It's a tie!`;
+  const nextTier = nextTierAfter(battleSet.tier);
+  const nextTierBtn = nextTier
+    ? `<button class="next-btn" style="display:inline-block;background:#43a047" onclick="startRandomBattle('${nextTier}')">➡️ Next level (${nextTier})</button>`
+    : "";
 
   battleGameEl.innerHTML = `
     <div class="result-emoji">${emoji}</div>
@@ -1322,6 +1321,7 @@ function battleShowResult() {
     <p style="color:#888;margin-bottom:20px;font-size:0.9rem;">Great teamwork, everyone!</p>
     <div class="result-buttons">
       <button class="next-btn" style="display:inline-block" onclick="startRandomBattle('${battleSet.tier}')">Play again 🔁</button>
+      ${nextTierBtn}
       <button class="next-btn" style="display:inline-block;background:#1978a3" onclick="renderBattleMenu()">⬅ Another level</button>
       <button class="next-btn" style="display:inline-block;background:#666" onclick="renderModeSelect()">🏠 Home</button>
     </div>
