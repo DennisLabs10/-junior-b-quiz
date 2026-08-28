@@ -420,6 +420,31 @@ function pickRandomSet(tier) {
   const options = quizSets.filter(s => s.tier === tier);
   return options[Math.floor(Math.random() * options.length)];
 }
+function poolForTier(tier) {
+  return quizSets.filter(s => s.tier === tier).flatMap(s => s.questions);
+}
+function getLastPlayed(tier) {
+  try {
+    const raw = localStorage.getItem("jbq_last_" + tier);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) { return []; }
+}
+function saveLastPlayed(tier, qList) {
+  try { localStorage.setItem("jbq_last_" + tier, JSON.stringify(qList)); } catch (e) {}
+}
+function pickQuestionsForTier(tier, count) {
+  const pool = poolForTier(tier);
+  const lastUsed = getLastPlayed(tier);
+  let available = pool.filter(q => !lastUsed.includes(q.q));
+  if (available.length < count) available = pool.slice();
+  const chosen = shuffle(available).slice(0, count);
+  saveLastPlayed(tier, chosen.map(q => q.q));
+  return chosen;
+}
+function nextTierAfter(tier) {
+  const idx = TIER_META.findIndex(t => t.tier === tier);
+  return (idx >= 0 && idx < TIER_META.length - 1) ? TIER_META[idx + 1].tier : null;
+}
 
 const quizSets = [
   {
@@ -629,6 +654,58 @@ const quizSets = [
       { q: "___ turn is it to play?", options: ["Who's", "Whose"], answer: 1, why: "<b>Whose</b> = possession; 'Who's' means 'who is'." },
       { q: "There isn't ___ sugar left in the jar.", options: ["some", "any"], answer: 1, why: "We use <b>any</b> in negative sentences." }
     ]
+  },
+  {
+    id: 17, tier: "Easy", emoji: "🌟", title: "Level 17", topics: "a/an • am/is/are • plurals • possessives • this/that",
+    questions: [
+      { q: "She has got ___ interesting story to tell.", options: ["a", "an"], answer: 1, why: "'interesting' starts with a vowel sound, so we use <b>an</b>." },
+      { q: "He ___ my cousin from Thessaloniki.", options: ["am", "is", "are"], answer: 1, why: "'He' → <b>is</b>." },
+      { q: "___ that boy your brother?", options: ["Is", "Are"], answer: 0, why: "'that boy' is singular → <b>Is</b>." },
+      { q: "There are four ___ in the garden.", options: ["flower", "flowers", "flowres"], answer: 1, why: "Most nouns add <b>-s</b> to make the plural: flower → flowers." },
+      { q: "My dad has got a car. ___ car is black.", options: ["His", "Her", "Their"], answer: 0, why: "'My dad' = he → <b>His</b>." },
+      { q: "We have got two ___ at home.", options: ["mouse", "mice", "mouses"], answer: 1, why: "'mouse' is irregular — the plural is <b>mice</b>." },
+      { q: "___ is your school, just around the corner.", options: ["This", "That", "These"], answer: 0, why: "'Just around the corner' is near, so we use <b>This</b>." },
+      { q: "The girls have got new shoes. ___ shoes are white.", options: ["Their", "Our", "His"], answer: 0, why: "'The girls' = they → <b>Their</b>." }
+    ]
+  },
+  {
+    id: 18, tier: "Medium", emoji: "🎈", title: "Level 18", topics: "have got • there is/are • prepositions • can/can't • imperatives",
+    questions: [
+      { q: "___ you got a bicycle?", options: ["Have", "Has"], answer: 0, why: "With 'you' we use <b>Have</b>." },
+      { q: "___ a ball under the sofa.", options: ["There is", "There are"], answer: 0, why: "One thing (a ball) → <b>There is</b>." },
+      { q: "The keys are ___ my bag.", options: ["in", "on", "under"], answer: 0, why: "<b>in</b> shows the keys are inside the bag." },
+      { q: "___ your sister swim?", options: ["Can", "Do"], answer: 0, why: "For ability we use <b>can</b>, not 'do'." },
+      { q: "___ your shoes before you come inside!", options: ["Take off", "Takes off", "Taking off"], answer: 0, why: "Imperatives use the base form: <b>Take off</b>." },
+      { q: "My grandparents ___ got a lovely garden.", options: ["have", "has"], answer: 0, why: "'My grandparents' = they → <b>have</b> got." },
+      { q: "___ many books on that shelf.", options: ["There is", "There are"], answer: 1, why: "'many books' is plural → <b>There are</b>." },
+      { q: "Stand ___ your best friend for the photo.", options: ["between", "next to", "in front of"], answer: 1, why: "<b>next to</b> means right beside someone." }
+    ]
+  },
+  {
+    id: 19, tier: "Hard", emoji: "🚦", title: "Level 19", topics: "present simple • present continuous",
+    questions: [
+      { q: "My brother ___ his teeth every night before bed.", options: ["brush", "brushes"], answer: 1, why: "'My brother' = he → <b>brushes</b> (verbs ending in -sh add -es)." },
+      { q: "___ it usually rain a lot here in winter?", options: ["Do", "Does"], answer: 1, why: "'it' → <b>Does</b>." },
+      { q: "Look! The plane ___ over our house right now!", options: ["flies", "is flying"], answer: 1, why: "'Look!' = happening now → <b>is flying</b>." },
+      { q: "We don't usually ___ TV on school nights.", options: ["watch", "watches"], answer: 0, why: "'We' → <b>watch</b> (no -s)." },
+      { q: "Shh! Grandpa ___ in the armchair.", options: ["sleeps", "is sleeping"], answer: 1, why: "Happening right now → <b>is sleeping</b>." },
+      { q: "My cousins ___ football every Saturday morning.", options: ["play", "plays"], answer: 0, why: "'My cousins' = they → <b>play</b>." },
+      { q: "Right now, I ___ my homework at the kitchen table.", options: ["do", "am doing"], answer: 1, why: "'Right now' = happening at this moment → <b>am doing</b>." },
+      { q: "The train ___ at 8 o'clock every morning.", options: ["leave", "leaves"], answer: 1, why: "'The train' = it → <b>leaves</b>." }
+    ]
+  },
+  {
+    id: 20, tier: "Challenge", emoji: "🎁", title: "Level 20", topics: "some/any • whose • possessive 's • object pronouns • much/many",
+    questions: [
+      { q: "There isn't ___ juice left in the fridge.", options: ["some", "any"], answer: 1, why: "We use <b>any</b> in negative sentences." },
+      { q: "___ umbrella is this? — It's Sophia's.", options: ["Who", "Whose"], answer: 1, why: "<b>Whose</b> asks about who something belongs to." },
+      { q: "Can you pass the salt to ___? I'm sitting right here.", options: ["I", "me"], answer: 1, why: "After a verb or preposition we use an object pronoun: <b>me</b>." },
+      { q: "How ___ milk do we need for the recipe?", options: ["much", "many"], answer: 0, why: "'Milk' cannot be counted, so we use <b>much</b>." },
+      { q: "This is not my pencil — it's ___.", options: ["her", "hers"], answer: 1, why: "We use <b>hers</b> alone, without a noun after it, to show possession." },
+      { q: "Have we got ___ eggs for the cake?", options: ["some", "any"], answer: 1, why: "We use <b>any</b> in questions." },
+      { q: "The dog is chasing ___ tail.", options: ["it's", "its"], answer: 1, why: "<b>its</b> shows possession (no apostrophe); 'it's' means 'it is'." },
+      { q: "That book on the shelf is ___, not yours.", options: ["I", "mine"], answer: 1, why: "We use <b>mine</b> alone to show possession." }
+    ]
   }
 ];
 
@@ -661,10 +738,25 @@ function getAudioCtx() {
   }
   return audioCtx;
 }
+function unlockAudio() {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  if (ctx.state === "suspended") { ctx.resume().catch(() => {}); }
+  try {
+    const buffer = ctx.createBuffer(1, 1, 22050);
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(ctx.destination);
+    source.start(0);
+  } catch (e) {}
+}
+document.addEventListener("touchstart", unlockAudio, { once: true, passive: true });
+document.addEventListener("click", unlockAudio, { once: true });
 function beep(freq, duration, type) {
   if (!soundOn) return;
   const ctx = getAudioCtx();
   if (!ctx) return;
+  if (ctx.state === "suspended") { ctx.resume().catch(() => {}); }
   try {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -786,9 +878,22 @@ function starsDisplay(tier) {
   return "⭐".repeat(s) + "☆".repeat(3 - s);
 }
 
+function resetProgress() {
+  if (!confirm("Reset all your stars and start over from zero?")) return;
+  TIER_META.forEach(t => {
+    try {
+      localStorage.removeItem("jbq_best_" + t.tier);
+      localStorage.removeItem("jbq_last_" + t.tier);
+    } catch (e) {}
+  });
+  renderMenu();
+}
+
 function renderMenu() {
   subtitleEl.innerHTML = "Junior B &nbsp;•&nbsp; Pick a difficulty — we'll surprise you with a set!";
-  let html = `<button class="menu-link" onclick="renderModeSelect()">⬅ Home</button><div class="levels-grid">`;
+  let html = `<button class="menu-link" onclick="renderModeSelect()">⬅ Home</button>
+    <button class="menu-link" style="float:right;color:#999" onclick="resetProgress()">🔄 Reset progress</button>
+    <div class="levels-grid">`;
   TIER_META.forEach(t => {
     html += `<div class="level-card" onclick="startRandomSet('${t.tier}')">
       <div class="level-emoji">${t.emoji}</div>
@@ -853,17 +958,14 @@ function startSoloTimer() {
 }
 
 function startRandomSet(tier) {
-  startSet(pickRandomSet(tier).id);
-}
-
-function startSet(id) {
-  activeSet = quizSets.find(s => s.id === id);
+  const meta = TIER_META.find(t => t.tier === tier);
+  activeSet = { tier: tier, title: tier, emoji: meta.emoji };
   practiceMode = false;
-  currentQuestions = prepareQuestions(activeSet.questions);
+  currentQuestions = prepareQuestions(pickQuestionsForTier(tier, 8));
   missedQuestions = [];
   current = 0;
   score = 0;
-  subtitleEl.innerHTML = `${activeSet.emoji} <b>${activeSet.title}</b> &nbsp;•&nbsp; ${activeSet.tier}`;
+  subtitleEl.innerHTML = `${meta.emoji} <b>${tier}</b>`;
   setScreen("game");
   buildGameShell();
   showQuestion();
@@ -977,6 +1079,10 @@ function showResult() {
   const mistakesBtn = missedQuestions.length
     ? `<button class="next-btn" style="display:inline-block;background:#FE6D0F" onclick="startMistakePractice()">🔄 Practise my mistakes</button>`
     : "";
+  const nextTier = nextTierAfter(activeSet.tier);
+  const nextTierBtn = (!practiceMode && nextTier)
+    ? `<button class="next-btn" style="display:inline-block;background:#43a047" onclick="startRandomSet('${nextTier}')">➡️ Next level (${nextTier})</button>`
+    : "";
   const confetti = stars === 3 ? `<div class="confetti-burst">${buildConfetti()}</div>` : "";
 
   gameEl.innerHTML = `
@@ -987,6 +1093,7 @@ function showResult() {
     <div class="result-buttons">
       ${mistakesBtn}
       <button class="next-btn" style="display:inline-block" onclick="startRandomSet('${activeSet.tier}')">▶️ Play again</button>
+      ${nextTierBtn}
       <button class="next-btn" style="display:inline-block;background:#1978a3" onclick="renderMenu()">🏠 Levels</button>
     </div>
   `;
