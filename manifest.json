@@ -1,0 +1,16 @@
+{
+  "name": "Junior B Grammar Quiz",
+  "short_name": "Grammar Quiz",
+  "description": "Junior B English grammar quiz with solo practice and team battle modes, by DennisLabs for Galouzidou.",
+  "start_url": ".",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#0052BF",
+  "lang": "en",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
